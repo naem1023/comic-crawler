@@ -187,11 +187,11 @@ def saveImageTag(bs_object, driver, number):
     targetlen = len(targetString)
 
     #썸네일 사진 패스하기
-    subnailString = 'https://chickencdn'
+    subnailString = 'https://닭'
     subnaillen = len(subnailString)
 
     #그 외 불필요 이미지 파일 패스하기
-    otherString = 'https://manamoa'
+    otherString = 'https://'
     otherStringlen = len(otherString)
 
 
@@ -209,7 +209,7 @@ def saveImageTag(bs_object, driver, number):
         if srcString[0:subnaillen] == subnailString:
             continue
 
-        #마나모아 서버 이미지면 저장 그만하기
+        #서버 이미지면 저장 그만하기
         #모든 만화 이미지는 외부 서버에 있음
         if (srcString[0:otherStringlen] == otherString) and i[0] >= 4:
             break

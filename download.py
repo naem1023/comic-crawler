@@ -1,4 +1,5 @@
 # 내장함수
+from types import BuiltinFunctionType
 from urllib.request import urlopen, Request
 # 명령행 파싱 모듈 argparse 모듈 사용
 import argparse
@@ -8,21 +9,25 @@ import requests as req
 from bs4 import BeautifulSoup
 
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException, ElementNotVisibleException, ElementNotInteractableException
+from selenium.common.exceptions import NoSuchElementException, ElementNotVisibleException, ElementNotInteractableException, UnexpectedAlertPresentException
 from selenium.webdriver.common.keys import Keys
 
 import os
 import sys
 
-from Screenshot import Screenshot_Clipping
+from screenshot import Screenshot_Clipping
+# from Screenshot import Screenshot_Clipping
 
 import glob
 
 #image module
 from PIL import Image
 
+import traceback
 
 def canvasSearch(driver, canvasExist, imgExist):
+    canvas_data = None
+    canvasExist = None
     try:
         #canvas 인스턴스들 모두 가져오기
         canvas_data = driver.find_elements_by_tag_name('canvas')
@@ -72,6 +77,7 @@ def deleteThumbnailList(driver):
 
     #자바 스크립트 구문 실행
     driver.execute_script(js_string)
+
 #폴더 생성 함수
 def createFolder(directory):
     try:
@@ -175,10 +181,11 @@ def readTxtFile():
     number = int(file.readline())
     url = file.readline()
     button = file.readline()
+    comic_name = file.readline()
 
-    return number, url, button
+    return number, url, button, comic_name
 
-def saveImageTag(bs_object, driver, number):
+def saveImageTag(bs_object, driver, number, comic_name):
     #크롤링 접근 방지 웹사이트용 헤더
     headers = {'User-Agent': 'Mozilla/5.0'}
 
@@ -187,65 +194,101 @@ def saveImageTag(bs_object, driver, number):
     targetlen = len(targetString)
 
     #썸네일 사진 패스하기
-    subnailString = 'https://닭'
-    subnaillen = len(subnailString)
+    thumbnailString = ''
+    thumbnaillen = len(thumbnailString)
 
     #그 외 불필요 이미지 파일 패스하기
-    otherString = 'https://'
+    otherString = ''
     otherStringlen = len(otherString)
 
 
-
     print('\n Img 인스턴스로 저장 중')
-    #인스턴스의 find_all 이라는 함수에 img 태그가 있으면 img_data에 넣어줌
+    # 인스턴스의 find_all 이라는 함수에 img 태그가 있으면 img_data에 넣어줌
     img_data = bs_object.find_all("img")
 
-    for i in enumerate(img_data[1:]):
-        print(i[0], i[1].attrs['src'])
+    # with open('img_tag.txt', 'w') as file:
+    #     for tag in img_data:
+    #         file.write(str(tag) + "\n")
 
-        srcString = i[1].attrs['src']
+    num_comic_img = 2
+    '''
+    structure of img tag(prop list)
+    1. src
+    2. data-....
+    3. style
+    '''
+    for idx, img_tag in enumerate(img_data):
+        # print(list(img_tag.attrs.keys()))
+        
+        attr_list = list(img_tag.attrs.keys())
+
+        # if lenght of attribute is less than 3
+        # it isn't comic image
+        if len(attr_list) < 2:
+            continue
+
+        data_tag = list(img_tag.attrs.keys())[1]
+        
+        # if it is comic image,
+        # index 1's attr must be start with 'data'.
+        if data_tag[:4] != 'data':
+            continue
+        
+        print(idx, img_tag.attrs[data_tag])
+
+        srcString = img_tag.attrs[data_tag]
 
         #썸네일은 건너뛰기
-        if srcString[0:subnaillen] == subnailString:
+        if srcString[:thumbnaillen] == thumbnailString:
+            print("pass thumbnail")
             continue
 
         #서버 이미지면 저장 그만하기
         #모든 만화 이미지는 외부 서버에 있음
-        if (srcString[0:otherStringlen] == otherString) and i[0] >= 4:
-            break
+        print("img index=", idx)
+        if (srcString[:otherStringlen] == otherString):
+            print("break othrestring")
+            continue
 
         #구글 드라이브 혹은 타서버에 저장된 만화 이미지 파일 처리
         if srcString[0:targetlen] == targetString:
-            #딕셔너리를 순서대로 넣어줌
-            imgReq = Request(url=i[1].attrs['src'], headers=headers)
-            imageDownload = urlopen(imgReq).read()
+            # first and second img is fake img.
+            if num_comic_img < 2:
+                pass
+            else:
+                #딕셔너리를 순서대로 넣어줌
+                imgReq = Request(url=img_tag.attrs[data_tag], headers=headers)
+                imageDownload = urlopen(imgReq).read()
 
-            #파일 이름 생성
-            filename = "image"+str(i[0]+1).zfill(2)+'.jpg'
+                #파일 이름 생성
+                filename = "image"+str(idx+1).zfill(2)+'.jpg'
 
-            #폴더 생성
-            createFolder(str(number))
+                folder_path = os.path.join(comic_name, str(number))
+                #폴더 생성
+                createFolder(folder_path)
 
-            #파일 생성 경로
-            filepath = os.path.join(str(number), filename)
+                #파일 생성 경로
+                filepath = os.path.join(folder_path, filename)
 
-            #파일 생성
-            with open(filepath,"wb") as f:
-                f.write(imageDownload)
+                #파일 생성
+                with open(filepath,"wb") as f:
+                    f.write(imageDownload)
+                
+                print('save => "./' + str(number) + '"')
+            num_comic_img += 1
             
-            print('저장 폴더 ' + str(number) + ' 에 저장완료')
 
 def clickNextButton(driver, number, button):
     #다음 페이지 버튼 감별
     if button == 'next':
         #다음 페이지 버튼 요소 가져오기
-        nextButton = driver.find_element_by_xpath("""//a[@class="chapter_next"]""")    
-
+        nextButton = driver.find_element_by_xpath("""//a[@id="goNextBtn"]""")    
+        
         #다음 페이지 버튼 클릭
         nextButton.click()
     elif button == 'prev':
         #다음 페이지 버튼 요소 가져오기
-        prevButton = driver.find_element_by_xpath("""//a[@class="chapter_prev"]""")
+        prevButton = driver.find_element_by_xpath("""//a[@id="goPrevBtn"]""")
 
         #다음 페이지 버튼 클릭
         prevButton.click()
@@ -267,70 +310,74 @@ def clickNextButton(driver, number, button):
     return number, url_info
 
 def imageCrawl():
+    number = 0
     #타겟 사이트 정보 확인
-    number, url_info, button = readTxtFile()
+    number, url_info, button, comic_name = readTxtFile()
+    button = button[:-1]
 
-    #몇 화인지
-    #number = 2
-
+    print("sumamry")
+    print("number of comic=", number)
+    print("url=",url_info)
+    print("next button type = ", button)
+    print("comic name = ", comic_name)
     #screenshot 객체 선언
     screenShotObject = Screenshot_Clipping.Screenshot()
 
     #크롬 드라이버 로드
-    driver = webdriver.Chrome('chromedriver.exe')
+    driver = webdriver.Chrome(os.path.join('./chromedriver'))
 
     canvasExist = True
     imgExist = True
 
+    createFolder(comic_name)
 
     while 1:
         try :
-            while 1:
-                print('\n' + '-' * 20)
-                print(str(number) + '번째 만화 페이지 로딩 시작')
-                
-                #페이지 로드, 전부 될 때까지 대기
-                driver.get(url_info)
-                print(str(number) + '페이지 로딩 완료...')
+            print('\n' + '-' * 20)
+            print(str(number) + '번째 만화 페이지 로딩 시작')
+            
+            #페이지 로드, 전부 될 때까지 대기
+            driver.get(url_info)
+            print(str(number) + '페이지 로딩 완료...')
 
+            #페이지 엘리먼트들 모두 저장
+            req = driver.page_source
+
+            #인스턴스 생성
+            bs_object = BeautifulSoup(req)
+            
+            canvas_data, canvasExist, imgExist = canvasSearch(driver, canvasExist, imgExist)
+                
+            #canvas 인스턴스가 존재할 때
+            if canvasExist :
+                print("\nRead via canvas tag")
+                #내비 바 요소 제거
+                #이래야 전체 스샷해도 내비바가 스샤이 안됨
+                deleteNaviBar(driver)
+
+                #풀 스샷에서 canvas 태그 크기별로 크롭 실행
+                fullshotCrop(driver, screenShotObject, canvas_data, number)
+
+                #이미지 합치기 및 잘린 이미지 제거
+                imageMerge(number)
+
+            #canvas 인스턴스가 없어서 img 인스턴스를 로드해야 할 때
+            if imgExist :
+                print("\nRead via img tag")
+                #썸네일 리스트 삭제
+                deleteThumbnailList(driver)
+
+                #썸네일 리스트 삭제했으니 다시 페이지 요소 저장
                 #페이지 엘리먼트들 모두 저장
                 req = driver.page_source
 
                 #인스턴스 생성
-                bs_object = BeautifulSoup(req)
-                
-                canvas_data, canvasExist, imgExist = canvasSearch(driver, canvasExist, imgExist)
-                    
-                #canvas 인스턴스가 존재할 때
-                if canvasExist :
-                    #내비 바 요소 제거
-                    #이래야 전체 스샷해도 내비바가 스샤이 안됨
-                    deleteNaviBar(driver)
+                bs_object = BeautifulSoup(req)    
 
-                    #풀 스샷에서 canvas 태그 크기별로 크롭 실행
-                    fullshotCrop(driver, screenShotObject, canvas_data, number)
+                #img 태그 저장 함수 호출
+                saveImageTag(bs_object, driver, number, comic_name)
 
-                    #이미지 합치기 및 잘린 이미지 제거
-                    imageMerge(number)
-
-                #canvas 인스턴스가 없어서 img 인스턴스를 로드해야 할 때
-                if imgExist :
-                    #썸네일 리스트 삭제
-                    deleteThumbnailList(driver)
-
-                    #썸네일 리스트 삭제했으니 다시 페이지 요소 저장
-                    #페이지 엘리먼트들 모두 저장
-                    req = driver.page_source
-
-                    #인스턴스 생성
-                    bs_object = BeautifulSoup(req)    
-
-                    #img 태그 저장 함수 호출
-                    saveImageTag(bs_object, driver, number)
-
-                number, url_info = clickNextButton(driver, number, button)
-
-
+            number, url_info = clickNextButton(driver, number, button)
 
         #다음 버튼을 누를 수 없을 때 1
         except NoSuchElementException :
@@ -339,6 +386,7 @@ def imageCrawl():
             print ('file name = ', __file__)
             print ('error line No = {}'.format(tb.tb_lineno))
             print('만화가 더 이상 없습니다')
+            traceback.print_exc()
             break
 
         #다음 버튼을 누를 수 없을 때 2
@@ -348,6 +396,7 @@ def imageCrawl():
             print ('file name = ', __file__)
             print ('error line No = {}'.format(tb.tb_lineno))
             print('만화가 더 이상 없습니다')
+            traceback.print_exc()
             break
 
         #다음 버튼을 누를 수 없을 때 3
@@ -357,6 +406,7 @@ def imageCrawl():
             print ('file name = ', __file__)
             print ('error line No = {}'.format(tb.tb_lineno))
             print('만화가 더 이상 없습니다')
+            traceback.print_exc()
             break
 
         #이미지 서버 상태가 안 좋아서 이미지 다운이 안될 때
@@ -365,9 +415,14 @@ def imageCrawl():
             print('이미지 로딩에 실패했습니다.')
             print('다시 페이지를 로딩합니다.')
             driver.navigate().refresh()
-            numer-=1
+            numer -= 1
+            traceback.print_exc()
             continue
 
+        except UnexpectedAlertPresentException :
+            print("마지막화입니다.")
+            traceback.print_exc()
+            break
         #그 외 에러 처리
         except Exception as e :
             print('-' * 20)
@@ -375,7 +430,7 @@ def imageCrawl():
             _, _ , tb = sys.exc_info() # tb -> traceback object 
             print ('file name = ', __file__)
             print ('error line No = {}'.format(tb.tb_lineno))
-
+            traceback.print_exc()
 
 def main():
     imageCrawl()

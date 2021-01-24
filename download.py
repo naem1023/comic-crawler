@@ -14,9 +14,10 @@ from selenium.webdriver.common.keys import Keys
 
 import os
 import sys
+import platform
 
-from screenshot import Screenshot_Clipping
-# from Screenshot import Screenshot_Clipping
+# from screenshot import Screenshot_Clipping
+from Screenshot import Screenshot_Clipping
 
 import glob
 
@@ -176,7 +177,7 @@ def imageMerge(number):
 
 #txt 파일 읽어서 몇 화, 무슨 링크인지 확인
 def readTxtFile():
-    file = open("website.txt", 'r')
+    file = open("website.txt", 'r', encoding='utf-8')
 
     number = int(file.readline())
     url = file.readline()
@@ -211,13 +212,14 @@ def saveImageTag(bs_object, driver, number, comic_name):
     #         file.write(str(tag) + "\n")
 
     num_comic_img = 2
+    img_idx = 1
     '''
     structure of img tag(prop list)
     1. src
     2. data-....
     3. style
     '''
-    for idx, img_tag in enumerate(img_data):
+    for img_tag in img_data:
         # print(list(img_tag.attrs.keys()))
         
         attr_list = list(img_tag.attrs.keys())
@@ -226,15 +228,25 @@ def saveImageTag(bs_object, driver, number, comic_name):
         # it isn't comic image
         if len(attr_list) < 2:
             continue
+        # print(attr_list)
 
-        data_tag = list(img_tag.attrs.keys())[1]
-        
+        isComicImg = False
         # if it is comic image,
-        # index 1's attr must be start with 'data'.
-        if data_tag[:4] != 'data':
+        # attribute list must contain 'data class'
+        for attr in attr_list:
+            if attr[:4] == 'data':
+                isComicImg = True
+                data_tag = attr
+        
+        # some image tag contains 'itemprop' class
+        if 'itemprop' in attr_list:
+            isComicImg = True
+            data_tag = 'content'
+
+        if not isComicImg:
             continue
         
-        print(idx, img_tag.attrs[data_tag])
+        print(img_idx, img_tag.attrs[data_tag])
 
         srcString = img_tag.attrs[data_tag]
 
@@ -245,37 +257,34 @@ def saveImageTag(bs_object, driver, number, comic_name):
 
         #서버 이미지면 저장 그만하기
         #모든 만화 이미지는 외부 서버에 있음
-        print("img index=", idx)
+        print("img index=", img_idx)
         if (srcString[:otherStringlen] == otherString):
             print("break othrestring")
             continue
 
         #구글 드라이브 혹은 타서버에 저장된 만화 이미지 파일 처리
         if srcString[0:targetlen] == targetString:
-            # first and second img is fake img.
-            if num_comic_img < 2:
-                pass
-            else:
-                #딕셔너리를 순서대로 넣어줌
-                imgReq = Request(url=img_tag.attrs[data_tag], headers=headers)
-                imageDownload = urlopen(imgReq).read()
+            #딕셔너리를 순서대로 넣어줌
+            imgReq = Request(url=img_tag.attrs[data_tag], headers=headers)
+            imageDownload = urlopen(imgReq).read()
 
-                #파일 이름 생성
-                filename = "image"+str(idx+1).zfill(2)+'.jpg'
+            #파일 이름 생성
+            filename = "image"+str(img_idx).zfill(2)+'.jpg'
 
-                folder_path = os.path.join(comic_name, str(number))
-                #폴더 생성
-                createFolder(folder_path)
+            folder_path = os.path.join(comic_name, str(number))
+            #폴더 생성
+            createFolder(folder_path)
 
-                #파일 생성 경로
-                filepath = os.path.join(folder_path, filename)
+            #파일 생성 경로
+            filepath = os.path.join(folder_path, filename)
 
-                #파일 생성
-                with open(filepath,"wb") as f:
-                    f.write(imageDownload)
-                
-                print('save => "./' + str(number) + '"')
-            num_comic_img += 1
+            #파일 생성
+            with open(filepath,"wb") as f:
+                f.write(imageDownload)
+            
+            print('save => "./' + str(number) + '"')
+            
+            img_idx += 1
             
 
 def clickNextButton(driver, number, button):
@@ -324,7 +333,13 @@ def imageCrawl():
     screenShotObject = Screenshot_Clipping.Screenshot()
 
     #크롬 드라이버 로드
-    driver = webdriver.Chrome(os.path.join('./chromedriver'))
+    platform_name = platform.system()
+    if platform_name == "Windows":
+        print("Current Platform is Windows")
+        driver = webdriver.Chrome(os.path.join('./chromedriver.exe'))
+    elif platform_name == "Darwin":
+        print("Current Platform is MacOS")
+        driver = webdriver.Chrome(os.path.join('./chromedriver'))
 
     canvasExist = True
     imgExist = True

@@ -1,0 +1,10 @@
+# images
+*.jpg
+*.png
+
+# setting
+*.json
+
+*.pyc
+
+.vscode

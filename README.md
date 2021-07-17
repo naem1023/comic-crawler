@@ -5,6 +5,7 @@
 - chrome web driver
   - from https://chromedriver.chromium.org/downloads
 - modules in requirements.txt
+- headers.json, setting.conf, website.txt
 ```
 pip3 install -r requirements.txt
 ```
@@ -16,6 +17,7 @@ pip3 install -r requirements.txt
 2. website address
 3. next button, prev button(just write 'next', 'prev')
 4. comic name
+5. comic site
 ```
 
 eg.
@@ -23,10 +25,11 @@ eg.
 1
 www.example.com/1
 next
-comic_nmae
+comic_name
+haha
 ```
 ---
 ## Run
 ```
-python download.py
+python main.py
 ```

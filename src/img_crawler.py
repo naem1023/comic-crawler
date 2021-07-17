@@ -53,13 +53,15 @@ def save_image_tag(bs_object, conf):
                 data_tag = attr
         
         # some image tag contains 'itemprop' class
-        if 'itemprop' in attr_list:
-            isComicImg = True
-            data_tag = 'content'
+        if conf['site_name'] == conf['comic_sites'][0]:
+            if 'itemprop' in attr_list:
+                isComicImg = True
+                data_tag = 'content'
 
-        if 'alt' in attr_list:
-            isComicImg = True
-            data_tag = 'src'
+        elif conf['site_name'] == conf['comic_sites'][1]:
+            if 'alt' in attr_list:
+                isComicImg = True
+                data_tag = 'src'
 
         if not isComicImg:
             continue
@@ -71,6 +73,10 @@ def save_image_tag(bs_object, conf):
         #썸네일은 건너뛰기
         if srcString[:thumbnaillen] == thumbnailString:
             print("pass thumbnail")
+            continue
+
+        if 'assets' in srcString:
+            print("pass img of assets")
             continue
 
         #서버 이미지면 저장 그만하기

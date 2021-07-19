@@ -34,7 +34,7 @@ haha
 ```
 {
     "identifier of site ": {
-        "User-Agent": "Mozilla/5.0"
+        "User-Agent": "Names of User-Agent"
     },
 }
 ```

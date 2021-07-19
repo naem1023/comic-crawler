@@ -1,19 +1,8 @@
-# 내장함수
-from types import BuiltinFunctionType
-
-
-# 명령행 파싱 모듈 argparse 모듈 사용
-import argparse
-
-# request => 요청하는거를 웹에 요청한 결과값을 얻어올수 있는 모듈
-import requests as req
-
 # 웹에 요청한 결과를 보내주는 모듈
 from bs4 import BeautifulSoup
 
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, ElementNotVisibleException, ElementNotInteractableException, UnexpectedAlertPresentException
-from selenium.webdriver.common.keys import Keys
 
 import os, sys, traceback, platform
 

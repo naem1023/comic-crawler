@@ -90,7 +90,11 @@ def save_image_tag(bs_object, conf):
         if srcString[0:targetlen] == targetString:
             #딕셔너리를 순서대로 넣어줌
             imgReq = Request(url=img_tag.attrs[data_tag], headers=headers)
-            imageDownload = urlopen(imgReq).read()
+            try:
+                imageDownload = urlopen(imgReq).read()
+            except:
+                continue
+                 
 
             #파일 이름 생성
             filename = "image"+str(img_idx).zfill(2)+'.jpg'

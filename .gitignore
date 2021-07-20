@@ -10,3 +10,8 @@
 .vscode
 *.conf
 *.txt
+
+build/
+dist/
+windows-10.zip
+main.spec

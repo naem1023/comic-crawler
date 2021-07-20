@@ -1,5 +1,12 @@
 # Comic Cralwer
 
+
+## Widows-10-build
+
+- Copy & paste 'website.txt', 'setting.conf', 'header.json' to directory of 'windows-10'.
+- If chromedriver doesn't work, update chrome and download chromedriver matched with your chrome version.
+- Run 'main.exe'.
+
 ## Requirements
 - python3
 - chrome web driver from https://chromedriver.chromium.org/downloads

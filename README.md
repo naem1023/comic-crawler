@@ -1,13 +1,22 @@
 # Comic Cralwer
 
 
-## Widows-10-build
+## Windows-10-build
 
 - Copy & paste 'website.txt', 'setting.conf', 'header.json' to directory of 'windows-10'.
+    - If you want samples of files, contact to me.
 - If chromedriver doesn't work, update chrome and download chromedriver matched with your chrome version.
 - Run 'main.exe'.
 
-## Requirements
+## Other OS build
+
+This program can run in any machine that can install all requirments of this program. So, run with python or build executable file with pyinstaller.
+
+---
+
+## Run with python
+
+### Requirements
 - python3
 - chrome web driver from https://chromedriver.chromium.org/downloads
 - modules in requirements.txt
@@ -17,7 +26,7 @@
 pip3 install -r requirements.txt
 ```
 ---
-## website.txt
+### website.txt
 
 ```
 1. how many
@@ -27,7 +36,7 @@ pip3 install -r requirements.txt
 5. comic site
 ```
 
-### Examlple of webisite.txt
+### Example of webisite.txt
 ```
 1
 www.example.com/1
@@ -36,7 +45,7 @@ comic_name
 haha
 ```
 ---
-## headers.json
+### headers.json
 
 ```
 {
@@ -46,7 +55,7 @@ haha
 }
 ```
 
-### Examlple of header.json
+### Example of header.json
 ```
 {
     "m": {
@@ -55,7 +64,7 @@ haha
 }
 ```
 ---
-## setting.conf
+### setting.conf
 
 ```
 comic_site=site_names
@@ -66,7 +75,7 @@ thumbnail=address_of_thumbnail
 unnecessary_string=address_of_unnecessary_string
 ```
 
-### Examlple of setting.conf
+### Example of setting.conf
 ```
 comic_site=haha,hoho
 windows_save_path=C:\\a\\b
@@ -75,8 +84,8 @@ linux_save_path=/home/user/a/b/
 thumbnail=https://example_thumbnail
 unnecessary_string=https://example_unnecessary
 ```
----
-## Run
+
+### Run
 ```
 python main.py
 ```

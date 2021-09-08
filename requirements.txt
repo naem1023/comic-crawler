@@ -2,7 +2,7 @@ beautifulsoup4==4.9.3
 bs4==0.0.1
 image==1.5.33
 mccabe==0.6.1
-Pillow==8.2.0
+Pillow==8.3.2
 requests==2.25.1
 selenium==3.141.0
 Selenium-Screenshot==1.7.0
